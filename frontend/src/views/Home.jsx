@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay, lastBW, setsDoneActive } from '../lib/history.js'
@@ -29,7 +29,10 @@ import { SeasonDeco } from '../components/Seasonal.jsx'
 import { WrappedHomeCard } from '../components/WrappedEntry.jsx'
 import RecoveryHint from '../components/RecoveryHint.jsx'
 import { ChallengesCard } from '../components/Challenges.jsx'
-import { isOn } from '../lib/modules.js'
+import { isOn, setModule } from '../lib/modules.js'
+import { coachAvailable } from '../lib/coach.js'
+import { DEMO } from '../lib/demo.js'
+import { MOBILE } from '../lib/mobile.js'
 import BodyMap from '../components/BodyMap.jsx'
 import { Thumb } from '../components/Media.jsx'
 import { loadOfRoutine } from '../lib/muscles.js'
@@ -46,6 +49,7 @@ export default function Home() {
   // The banner switched off and the sync stuck: a dot on the gear (Settings → Show connection status).
   const trouble = useConnectionTrouble()
   const [weekOffset, setWeekOffset] = useState(0)
+  const [dayOff, setDayOff] = useState(0)   // fork: the day Today shows, 0 is today
 
   const today = new Date()
   // A weekday can hold several routines. `todayRoutines` is the whole day; `routine` is the
@@ -122,7 +126,6 @@ export default function Home() {
   // Settings → Modules (lib/modules.js): what a module switched off hides here.
   const on = id => isOn(S, id)
   const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: weighInAt(b), y: b.w, d: b.d }))
-  const heroLoad = useMemo(() => loadOfRoutine({ ex: todayRoutines.flatMap(r => r?.ex || []) }), [todayRoutines])
 
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (todayRoutines.length) startFlow(effectiveRoutineIds(S, todayISO())); else dayOverrideSheet(todayISO()) }
@@ -131,46 +134,85 @@ export default function Home() {
   const progChip = programmeChip(S)
   const onQueueStart = id => { if (S.active) nav('/workout'); else startFlow([id]) }
 
-  // Fork redesign (Today): a big muscle map of today's session, the day as a large title with its
+  // Fork redesign (Today): a big muscle map of the day's session, the day as a large title with its
   // neighbours either side, a few facts as pills, then one card with the exercises and Start.
+  // A swipe (or a tap on a neighbour) moves to the day before or after, to look at what is planned.
   const dayAt = n => { const d = new Date(today); d.setDate(today.getDate() + n); return d }
   const wdName = d => d.toLocaleDateString(dateLocale(), { weekday: 'long' })
-  const ySide = dayAt(-1), tSide = dayAt(1)
+  const step = n => setDayOff(o => Math.max(-14, Math.min(28, o + n)))
+  const isToday = dayOff === 0, isPast = dayOff < 0
+  const viewDate = dayAt(dayOff), viewISO = isoOf(viewDate)
+  const dayName = n => (dayOff + n === 0 ? t('Today') : wdName(dayAt(dayOff + n)))
+  const vRoutines = isToday ? todayRoutines : effectiveRoutines(S, viewISO)
+  const vRoutine = vRoutines[0] || null
+  const vName = vRoutines.map(r => r.name).join(' + ')
+  const vLogged = isToday ? doneToday : (S.workouts.filter(w => w.d === viewISO).at(-1) || null)
+  const vKey = vRoutines.map(r => r.id).join(',')
   const preview = useMemo(() => {
-    if (S.active || doneToday) return []
+    if ((isToday && S.active) || vLogged) return []
     try {
-      return todayRoutines.flatMap(r => buildSessionEntries(S, r).map((e, i) => ({ e, id: r.ex[i]?.id, key: r.id + ':' + i })))
+      return vRoutines.flatMap(r => buildSessionEntries(S, r).map((e, i) => ({ e, id: r.ex[i]?.id, key: r.id + ':' + i })))
     } catch { return [] }
-  }, [S, todayKey, !!doneToday]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [S, viewISO, vKey, !!vLogged]) // eslint-disable-line react-hooks/exhaustive-deps
+  const heroLoad = useMemo(() => loadOfRoutine({ ex: vRoutines.flatMap(r => r?.ex || []) }), [viewISO, vKey, S.routines]) // eslint-disable-line react-hooks/exhaustive-deps
   const workOf = e => (e?.sets || []).filter(x => !isWarmupRow(x))
   const setTotal = preview.reduce((n, p) => n + workOf(p.e).length, 0)
-  const lastSame = routine ? [...S.workouts].reverse().find(w => (Array.isArray(w.routineIds) ? w.routineIds : [w.routineId]).includes(routine.id)) : null
-  const showMap = todayRoutines.some(r => r.ex.length) && !doneToday
+  const lastSame = vRoutine ? [...S.workouts].reverse().find(w => w.d < viewISO && (Array.isArray(w.routineIds) ? w.routineIds : [w.routineId]).includes(vRoutine.id)) : null
+  const showMap = vRoutines.some(r => r.ex.length) && !vLogged
   const startLabel = S.active ? (editingSaved ? t('Edit') : t('Resume')) : t('Start workout')
+  // Another day's plan can be started now (trained a day early); a day gone by only shows.
+  const onStartView = () => { if (S.active) nav('/workout'); else startFlow(effectiveRoutineIds(S, viewISO)) }
+  const swipe = useRef(null)
+  const onTouchStart = e => { const p = e.touches[0]; swipe.current = { x: p.clientX, y: p.clientY } }
+  const onTouchEnd = e => {
+    const s0 = swipe.current; swipe.current = null
+    const p = e.changedTouches[0]
+    if (!s0 || !p) return
+    const dx = p.clientX - s0.x, dy = p.clientY - s0.y
+    if (Math.abs(dx) < 50 || Math.abs(dx) < 1.5 * Math.abs(dy)) return
+    const rtl = document.documentElement.dir === 'rtl'
+    step((dx < 0) !== rtl ? 1 : -1)
+  }
+  // The Coach's button. Off, a tap turns the module on first; with no provider set up yet it
+  // lands on the setup screen instead of the chat.
+  const coachMode = useStore(s => s.coachLocal?.mode)
+  const config = useStore(s => s.config)
+  const coachReady = coachAvailable(config, user, { demo: DEMO, mobile: MOBILE, coachMode })
+  const openCoach = () => {
+    if (!on('coach')) useStore.getState().update(s => setModule(s, 'coach', true))
+    nav(coachReady ? '/coach' : '/coach/setup')
+  }
 
   return <div className="narrow today-v">
     <div className="today-top">
       <button className="roundbtn" onClick={() => nav('/plan')} aria-label={t('Plan')} data-tour="tab-plan"><Icon name="calendar" /></button>
       <SeasonDeco spot="header-bats" />
-      <button className="roundbtn" data-tour="settings-gear" onClick={() => nav('/settings')} aria-label={trouble ? t('Settings') + ', ' + t('Connection problem') : t('Settings')}><Icon name="gear" />{trouble && <span className="tab-dot" aria-hidden="true" />}</button>
+      <div className="row" style={{ gap: 10 }}>
+        <button className="roundbtn coachbtn" onClick={openCoach} aria-label={t('Coach')}><Icon name="sparkles" /></button>
+        <button className="roundbtn" data-tour="settings-gear" onClick={() => nav('/settings')} aria-label={trouble ? t('Settings') + ', ' + t('Connection problem') : t('Settings')}><Icon name="gear" />{trouble && <span className="tab-dot" aria-hidden="true" />}</button>
+      </div>
     </div>
 
-    {showMap && <div className="today-map"><BodyMap load={heroLoad} body={S.body} /></div>}
+    <div className="today-swipe" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    {showMap ? <div className="today-map"><BodyMap load={heroLoad} body={S.body} /></div> : <div className="today-map-gap" />}
 
     <div className="today-days">
-      <button className="side" onClick={() => dayOverrideSheet(isoOf(ySide))}>{wdName(ySide)}</button>
-      <h1>{t('Today')}</h1>
-      <button className="side" onClick={() => dayOverrideSheet(isoOf(tSide))}>{wdName(tSide)}</button>
+      <button className="side l" onClick={() => step(-1)}><span>{dayName(-1)}</span></button>
+      <h1>{isToday ? t('Today') : <button className="today-back" onClick={() => setDayOff(0)} aria-label={wdName(viewDate) + ', ' + t('Today')}>{wdName(viewDate)}</button>}</h1>
+      <button className="side r" onClick={() => step(1)}><span>{dayName(1)}</span></button>
     </div>
+    {!isToday && <div className="small dim today-date">{fmtDate(viewISO, true)}</div>}
 
     <div className="today-pills">
       {setTotal > 0 && <span className="pill-o">{tn('{0} set', '{0} sets', setTotal)}</span>}
       {preview.length > 0 && <span className="pill-o">{tn('{0} exercise', '{0} exercises', preview.length)}</span>}
-      {!S.active && <button className="pill-f" onClick={() => nav('/workout')} aria-label={t('Choose a different workout')}>
+      {isToday && !S.active && <button className="pill-f" onClick={() => nav('/workout')} aria-label={t('Choose a different workout')}>
         {routine ? todayName : t('Rest day')}<Icon name="swap" /></button>}
+      {!isToday && !isPast && <button className="pill-f" onClick={() => dayOverrideSheet(viewISO)} aria-label={t('Choose a different workout')}>
+        {vRoutine ? vName : t('Rest day')}<Icon name="swap" /></button>}
     </div>
 
-    {rotating && <div className="card">
+    {rotating && isToday && <div className="card">
       {queue ? <QueueRow S={S} today={todayISO()} onStart={onQueueStart} managed={managedQueue} /> : <div className="empty">
         {t('No rotation yet. Add routines to it in Plan.')}
         <div style={{ marginTop: 10 }}><Button size="sm" variant="tinted" onClick={() => nav('/plan')}>{t('Set up in Plan')}</Button></div>
@@ -178,16 +220,18 @@ export default function Home() {
     </div>}
 
     <div className="card today-card" data-tour="today">
-      {progChip && <button type="button" className="chip ichip prog-chip" onClick={() => nav('/plan/programmes')}><Icon name="calendar" /><span>{progChip}</span></button>}
+      {isToday && progChip && <button type="button" className="chip ichip prog-chip" onClick={() => nav('/plan/programmes')}><Icon name="calendar" /><span>{progChip}</span></button>}
       <div className="row between today-card-hd">
-        <div className="ttl">{S.active ? (editingSaved ? S.active.name : t('{0} (in progress)', S.active.name))
+        <div className="ttl">{isToday ? (S.active ? (editingSaved ? S.active.name : t('{0} (in progress)', S.active.name))
           : doneToday ? (doneToday.name ? t('{0} (done)', doneToday.name) : t('Workout done'))
-          : routine ? todayName : t('Rest day')}{todayOvr && routine && !doneToday ? ' · ' + t('rescheduled') : ''}</div>
-        {lastSame && !S.active && !doneToday && <span className="small dim">{t('Last time')}: {fmtDate(lastSame.d, true)}</span>}
+          : routine ? todayName : t('Rest day')) + (todayOvr && routine && !doneToday ? ' · ' + t('rescheduled') : '')
+          : vLogged ? (vLogged.name ? t('{0} (done)', vLogged.name) : t('Workout done'))
+          : vRoutine ? vName : t('Rest day')}</div>
+        {lastSame && !(isToday && S.active) && !vLogged && <span className="small dim">{t('Last time')}: {fmtDate(lastSame.d, true)}</span>}
       </div>
-      {next && !doneToday && <div className="small dim ss" style={{ marginTop: 4 }}>{t('Next session: {0}, {1}', t(DAYN[next.weekday]), next.routine.name)}</div>}
+      {isToday && next && !doneToday && <div className="small dim ss" style={{ marginTop: 4 }}>{t('Next session: {0}, {1}', t(DAYN[next.weekday]), next.routine.name)}</div>}
       {preview.length > 0 && <div className="today-list">
-        {preview.slice(0, 6).map(({ e, id, key }) => {
+        {preview.map(({ e, id, key }) => {
           const ex = EXIDX[id]
           const w = workOf(e), first = w[0]
           return <div className="today-ex" key={key}>
@@ -196,11 +240,12 @@ export default function Home() {
             {first && (first.r > 0 || first.sec > 0) && <span className="tg">{first.sec > 0 ? first.sec + ' s' : (first.w > 0 ? fmtNum(first.w) + ' ' + S.unit + ' × ' : '') + first.r}</span>}
           </div>
         })}
-        {preview.length > 6 && <div className="small dim">+{preview.length - 6}</div>}
       </div>}
-      {(routine || S.active) && !doneToday && <Button variant="primary" className="today-start" icon="play" onClick={onToday}>{startLabel}</Button>}
-      {!routine && !S.active && !doneToday && <Button className="today-start" icon="plus" onClick={onToday}>{t('Plan')}</Button>}
+      {isToday && (routine || S.active) && !doneToday && <Button variant="primary" className="today-start" icon="play" onClick={onToday}>{startLabel}</Button>}
+      {isToday && !routine && !S.active && !doneToday && <Button className="today-start" icon="plus" onClick={onToday}>{t('Plan')}</Button>}
+      {!isToday && !isPast && vRoutine && !vLogged && <Button variant="primary" className="today-start" icon="play" onClick={onStartView}>{S.active ? t('Resume') : t('Start workout')}</Button>}
       <SeasonDeco spot="home-hero" />
+    </div>
     </div>
 
     {!rotating && left && <div className="card today-week" {...tappable(() => nav('/plan'))}>

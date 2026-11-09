@@ -3314,11 +3314,18 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .today-map .bodymap .bm-v{height:200px;width:auto;max-height:none}
 .today-map .bodymap .bm-ph{height:200px;width:100px}
 .today-map .bodymap .bm-sil{fill:var(--surface-2)}
-.today-days{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;gap:14px;margin:8px -16px 0;overflow:hidden}
-.today-days h1{font-size:2.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:0}
-.today-days .side{font-size:1.5rem;font-weight:700;color:var(--label-4);white-space:nowrap;overflow:hidden;text-transform:capitalize}
-.today-days .side:first-child{text-align:end;direction:rtl}
-.today-days .side:last-child{text-align:start}
+.today-days{display:flex;align-items:baseline;justify-content:center;gap:28px;margin:8px -16px 0;overflow:hidden}
+.today-days h1{flex:none;font-size:2.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:0;text-transform:capitalize}
+.today-days .today-back{font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit}
+/* The neighbours share the room left and right equally and sit 28px from the title; a long name
+   runs off the screen's edge (justify-content overflows at the start in flexbox). */
+.today-days .side{flex:1 1 0;min-width:0;overflow:hidden;display:flex;font-size:1.5rem;font-weight:700;color:var(--label-4);white-space:nowrap;text-transform:capitalize}
+.today-days .side.l{justify-content:flex-end}
+.today-days .side.r{justify-content:flex-start}
+.today-date{text-align:center;margin-top:2px}
+.today-map-gap{height:12px}
+.today-swipe{touch-action:pan-y}
+.coachbtn{color:var(--acc)}
 .today-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 16px}
 .today-pills .pill-o{padding:8px 16px;border-radius:20px;border:1px solid var(--sep);font-size:var(--fs-callout);font-weight:500}
 .today-pills .pill-f{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:var(--surface);color:var(--label-2);font-size:var(--fs-callout);font-weight:500}

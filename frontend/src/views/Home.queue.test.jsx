@@ -356,3 +356,19 @@ describe('Home: your own loop', () => {
     expect(host.querySelector('.queue .row .small').textContent).toBe('US W1')
   })
 })
+
+// Fork: Today pages through the days around it, a tap on a neighbour or a swipe.
+describe('Home — looking at another day (fork)', () => {
+  it('a tap on the next day shows that day and its planned routine, and the title brings today back', () => {
+    const tomorrow = (new Date().getDay() + 1) % 7
+    setS({ queue: null, week: { [tomorrow]: ['own'] } })
+    mount()
+    expect(host.querySelector('.today-days h1').textContent).toBe('Today')
+    act(() => host.querySelector('.today-days .side.r').click())
+    expect(host.querySelector('.today-days h1').textContent).not.toBe('Today')
+    expect(host.querySelector('.today-card .ttl').textContent).toBe('Core')
+    expect(host.querySelector('.today-card .today-start')).toBeTruthy()
+    act(() => host.querySelector('.today-back').click())
+    expect(host.querySelector('.today-days h1').textContent).toBe('Today')
+  })
+})
