@@ -2387,7 +2387,8 @@ describe('workout compact view', () => {
     await mount([withExtras([false])], 0, state)
 
     expect(container.querySelector('.progline')).toBeTruthy()
-    // Fork: the Best tag and the Last time line gave way to the Previous column.
+    expect(container.textContent).toContain('Last time')
+    // Fork: the Best tag gave way to the Previous column.
     expect(container.querySelector('.sethead .p-sp')?.textContent).toBe('Previous')
     expect(container.querySelector('.setrow .prev')?.textContent).toBe('60×5')
   })
@@ -3367,8 +3368,7 @@ describe('set-row column header', () => {
 
 // #173: the line under an exercise holds the rows against the last time in this routine, or
 // against the best set of the exercise; tapping the line switches, for every exercise.
-// Fork: the Previous column replaces this line whenever there is a last time to show.
-describe.skip('the reference line: last time or best set', () => {
+describe('the reference line: last time or best set', () => {
   const session = (d, rid, w, r) => ({ d, start: Date.parse(d + 'T18:00:00'), routineIds: [rid], entries: [{ id: 'plain-bench', rid, target: { reps: r, weight: w }, sets: [{ w, r, done: true }] }] })
   const history = [session('2026-08-10', 'B', 80, 5), session('2026-08-24', 'A', 60, 10), session('2026-08-26', 'A', 55, 8)]
   const line = () => container.querySelector('.refline')
@@ -3427,7 +3427,7 @@ describe.skip('the reference line: last time or best set', () => {
     await act(async () => { line().dispatchEvent(new dom.Event('click', { bubbles: true })) })
     await rerender()
     expect(line().textContent).toMatch(/^Best set \(.+\): 80×5$/)
-    expect(container.textContent).toContain('Best: 80 kg')
+    // fork: the Best tag row is not on the workout screen; the line above carries the best set
   })
 
   // Arabic: a set right after the label took the label's direction and read 8×60, while the
