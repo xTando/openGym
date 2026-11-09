@@ -19,16 +19,16 @@
 /* ---------------------------------------------------------------- tokens -- */
 :root {
   /* surfaces — dark is the default */
-  --bg:        #000000;
-  --bg-el:     #0e0e10;   /* elevated backdrop (sheets, bars) */
-  --surface:   #1c1c1e;   /* card / grouped-list fill */
-  --surface-2: #2c2c2e;   /* pressed + nested fill */
-  --surface-3: #3a3a3c;   /* controls (segmented track, switch off) */
+  --bg:        #0b0b0c;
+  --bg-el:     #111113;   /* elevated backdrop (sheets, bars) */
+  --surface:   #17171a;   /* card / grouped-list fill */
+  --surface-2: #232327;   /* pressed + nested fill */
+  --surface-3: #2e2e33;   /* controls (segmented track, switch off) */
   /* Things that float over the page (the tour bubble, a dialog, the rest timer, a chart's tooltip,
      the back-to-top button): one step lighter than a card and edged with a hairline of light, so
      in the dark theme they read as lifted rather than as one more card under a shadow you cannot
      see on black (redesign 1.4.5, P11). In the light theme white with the shadow does that. */
-  --surface-raised: #2c2c2e;
+  --surface-raised: #26262b;
   --raised-line: rgba(255,255,255,.09);
 
   /* text */
@@ -49,8 +49,9 @@
   --purple:#bf5af2; --mint:#63e6e2; --brown:#ac8e68; --grey:#8e8e93;
 
   /* accent (per-account, synced) */
-  --acc:  var(--green);
-  --acc-2:#248a3d;
+  --lime:#b8f04a;
+  --acc:  var(--lime);
+  --acc-2:#8cc02a;
   --on-acc:#000000;
   --acc-soft: color-mix(in srgb, var(--acc) 16%, transparent);
   --acc-line: color-mix(in srgb, var(--acc) 38%, transparent);
@@ -61,7 +62,7 @@
   --acc-ink: var(--acc);
 
   /* geometry */
-  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px; --r-card:14px;
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:26px; --r-card:22px;
   --pad:16px;
   --icon-stroke:1.7;
 
@@ -78,7 +79,7 @@
   --fs-body:1.0625rem;     /* 17: body and row titles */
   --fs-title3:1.25rem;     /* 20: card titles, an exercise name */
   --fs-title2:1.375rem;    /* 22: a lead line */
-  --fs-large:2.125rem;     /* 34: the page title (30 on a narrow phone, below) */
+  --fs-large:2.5rem;       /* 40: the page title (30 on a narrow phone, below) */
   --lh-tight:1.06; --lh-title:1.2; --lh-body:1.29; --lh-small:1.38;
   --ls-large:-.028em; --ls-title:-.021em; --ls-body:-.01em; --ls-small:-.004em;
 
@@ -141,7 +142,7 @@
 }
 
 /* accents — Apple's system colours, so a recolour never looks off-system */
-:root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#248a3d; --on-acc:#000 }
+:root[data-accent="lime"]  { --acc:var(--lime);  --acc-2:#8cc02a; --on-acc:#000 }
 :root[data-accent="sky"]   { --acc:var(--blue);   --acc-2:#0060df; --on-acc:#fff }
 :root[data-accent="orange"]{ --acc:var(--orange); --acc-2:#c76b00; --on-acc:#000 }
 :root[data-accent="violet"]{ --acc:var(--purple); --acc-2:#8944ab; --on-acc:#fff }
@@ -376,9 +377,9 @@ button.conn:active{filter:brightness(1.12)}
 .hdr>div{min-width:0}
 .hdr>.btn{flex:none}
 .hdr>.hdr-actions{display:flex;align-items:center;gap:8px;flex:none}
-.hdr h1{font-size:var(--fs-large);line-height:var(--lh-tight);font-weight:700;letter-spacing:var(--ls-large);overflow-wrap:break-word}
+.hdr h1{font-size:var(--fs-large);line-height:var(--lh-tight);font-weight:800;letter-spacing:var(--ls-large);overflow-wrap:break-word}
 /* the page title drops a step on phone widths (the Library's header leaves it the least room) */
-@media (max-width:420px){:root{--fs-large:1.875rem}}
+@media (max-width:420px){:root{--fs-large:2.25rem}}
 .hdr .sub{color:var(--label-2);font-size:var(--fs-subhead);letter-spacing:-.006em;margin-top:4px}
 /* Library: the count line runs under the title row at full width instead of beside the "By muscle"
    button, which left it ~200px on a phone: the catalogue count plus your own exercises stays one
@@ -3272,3 +3273,105 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
   .kpis .tile{padding:10px 11px}
   .kpis .tile .v{font-size:var(--fs-title3)}
 }
+
+/* ------------------------------------------------------- fork redesign -- */
+/* Floating pill tab bar (TabBar.jsx): three tabs, the active one on a raised chip, a Resume pill
+   while a session runs. It floats over the page, so the page keeps a little more room below. */
+#app{padding-bottom:calc(112px + var(--sab))}
+#tabbar.pill{
+  inset-inline-start:50%;inset-inline-end:auto;bottom:calc(14px + var(--sab));transform:translateX(-50%);
+  width:max-content;max-width:calc(100% - 24px);gap:4px;padding:6px;align-items:center;
+  border-radius:40px;border:1px solid var(--raised-line);border-top:1px solid var(--raised-line);
+  background:color-mix(in srgb,var(--surface-raised) 94%,transparent);
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.7);
+}
+[dir="rtl"] #tabbar.pill{transform:translateX(50%)}
+#tabbar.pill button{
+  flex:0 0 auto;width:84px;height:58px;justify-content:center;padding:0;gap:3px;
+  border-radius:30px;font-size:12px;font-weight:600;color:var(--label-2);
+}
+#tabbar.pill button .icn{font-size:23px}
+#tabbar.pill button.on{background:var(--surface-3);color:var(--label)}
+#tabbar.pill button.on .icn{color:var(--acc)}
+#tabbar.pill button.start{margin-top:0;width:auto;padding:0 18px;flex-direction:row;gap:8px;background:var(--orange);color:#000;font-size:15px}
+#tabbar.pill button.start span,#tabbar.pill button.start .icn{color:#000}
+:root[data-theme="light"] #tabbar.pill{background:rgba(255,255,255,.96)}
+
+/* Today (views/Home.jsx) */
+.roundbtn{
+  width:52px;height:52px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;position:relative;
+  background:var(--surface);border:1px solid var(--raised-line);color:var(--label);font-size:22px;
+  transition:transform var(--fast) var(--ease);
+}
+.roundbtn:active{transform:scale(var(--press-scale-sm))}
+.roundbtn .tab-dot{top:6px;right:6px;box-shadow:0 0 0 2px var(--surface)}
+.today-top{display:flex;justify-content:space-between;align-items:center;margin:4px 0 0}
+.today-map{display:flex;justify-content:center;margin:2px 0 -4px}
+.today-map .bodymap{gap:14px;--bm-base:var(--surface-2)}
+.today-map .bodymap .bm-v{height:200px;width:auto;max-height:none}
+.today-map .bodymap .bm-ph{height:200px;width:100px}
+.today-map .bodymap .bm-sil{fill:var(--surface-2)}
+.today-days{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;gap:14px;margin:8px -16px 0;overflow:hidden}
+.today-days h1{font-size:2.75rem;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:0}
+.today-days .side{font-size:1.5rem;font-weight:700;color:var(--label-4);white-space:nowrap;overflow:hidden;text-transform:capitalize}
+.today-days .side:first-child{text-align:end;direction:rtl}
+.today-days .side:last-child{text-align:start}
+.today-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 16px}
+.today-pills .pill-o{padding:8px 16px;border-radius:20px;border:1px solid var(--sep);font-size:var(--fs-callout);font-weight:500}
+.today-pills .pill-f{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:var(--surface);color:var(--label-2);font-size:var(--fs-callout);font-weight:500}
+.today-card{padding:18px}
+.today-card .ttl{font-size:1.375rem;font-weight:700;letter-spacing:-.02em}
+.today-list{display:flex;flex-direction:column;gap:12px;margin:14px 0 4px}
+.today-ex{display:flex;align-items:center;gap:12px;min-width:0}
+.today-ex .thumb,.today-ex .today-ph{width:42px;height:42px;border-radius:10px;flex:none;background:var(--surface-2)}
+.today-ex .nm{flex:1;min-width:0;font-size:var(--fs-callout);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-ex .tg{font-size:var(--fs-subhead);font-weight:600;color:var(--acc-ink);white-space:nowrap}
+.today-start{margin-top:16px;width:100%;min-height:56px;border-radius:28px;font-size:1.125rem;font-weight:700;
+  position:sticky;bottom:calc(92px + var(--sab));z-index:2;box-shadow:0 10px 30px -10px rgba(0,0,0,.8)}
+.today-week{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ttl2{font-size:var(--fs-body);font-weight:600}
+.week-dots{display:flex;gap:6px}
+.week-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--surface-3)}
+.week-dots span.on{background:var(--acc);border-color:var(--acc)}
+
+/* Workout (views/Workout.jsx): set table with a Previous column, big plain fields, square checks */
+.sethead{font-size:var(--fs-caption);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--label-3)}
+.sethead .p-sp,.setrow .prev{flex:0 0 66px;min-width:0;text-align:start}
+.setrow .prev{font-size:var(--fs-subhead);color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sethead .ck-sp{width:52px}
+.setrow{padding:6px 10px;margin:0 -10px;border-radius:12px;transition:background var(--med)}
+.setrow+.setrow::before{display:none}
+.setrow.done{background:color-mix(in srgb,var(--acc) 11%,transparent)}
+.setrow .n,.setrow-side>.n{width:26px;height:26px;background:none;color:var(--label);font-size:var(--fs-body);font-weight:700}
+.setrow .stp.plain{background:var(--surface-2);border-radius:12px;min-height:50px}
+.setrow .stp.plain .num{font-size:1.25rem;font-weight:700;min-height:50px}
+.setrow.done .stp.plain{background:color-mix(in srgb,var(--label) 7%,transparent)}
+.setrow .chk{width:52px;height:50px;border-radius:12px;background:var(--surface-2);box-shadow:none;color:var(--label-3)}
+.setrow .chk .icn{font-size:1.25rem;--icon-stroke:3}
+.setrow .chk::before{inset:-4px}
+.setrow .chk.on{background:var(--acc);color:var(--on-acc)}
+.setrow .settrend{display:none}
+.exhd{margin-top:4px}
+/* Rest bar: a lime-tinted pill floating over the bottom of the workout */
+body.no-tabbar #timer{
+  inset-inline-start:12px;inset-inline-end:12px;bottom:calc(12px + var(--sab));border-radius:40px;padding:10px 10px 10px 22px;
+  background:#1d2711;background:color-mix(in srgb,var(--acc) 12%,var(--bg-el));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 28%,transparent),0 14px 40px -12px rgba(0,0,0,.75);
+}
+body.no-tabbar #timer .bar{display:none}
+#timer .t{font-size:32px;font-weight:800}
+#timer .acts .btn{border-radius:26px;min-height:50px}
+#timer .acts .skip{background:var(--acc);color:var(--on-acc)}
+:root[data-theme="light"] body.no-tabbar #timer{background:color-mix(in srgb,var(--acc) 22%,#fff)}
+.setrow.done>*:not(.n){opacity:1}
+.setrow.done .stp.plain .num{color:var(--label-2)}
+.setrow.done .n{background:none;color:var(--label)}
+
+/* Plan (views/Plan.jsx): a rest day is a thin, quiet row */
+.plan-day.is-rest{padding-top:6px;padding-bottom:6px;min-height:0}
+.plan-day.is-rest .lrow-i{width:28px;height:28px;font-size:15px;background:none;color:var(--label-3)}
+.plan-day.is-rest .tt{color:var(--label-2);font-size:var(--fs-subhead)}
+.plan-day.is-rest .chev{opacity:.4}
+/* Cards: rounder, a hairline edge, as in the mockup */
+.card{border-radius:var(--r-card)}
+:root:not([data-theme="light"]) .card{box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { favIds, isFav, toggleFav, sortFavouritesFirst, sortYoursFirst, usageOf } from './favourites.js'
+import { favIds, isFav, toggleFav, sortFavouritesFirst, sortYoursFirst, usageOf, sortRecentFirst, lastUsedOf } from './favourites.js'
 
 const ex = id => ({ id, n: id })
 
@@ -42,5 +42,26 @@ describe('sortYoursFirst', () => {
   })
   it('counts routines and logged workouts as use', () => {
     expect(usageOf({ routines: [{ ex: [{ id: 'a' }] }], workouts: [{ entries: [{ id: 'a' }, { id: 'b' }] }] })).toEqual({ a: 2, b: 1 })
+  })
+})
+
+describe('sortRecentFirst (fork)', () => {
+  const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }]
+  const S = {
+    favEx: ['d'],
+    workouts: [
+      { d: '2026-11-01', entries: [{ id: 'b' }] },
+      { d: '2026-11-05', entries: [{ id: 'c' }, { id: 'b' }] },
+      { d: '2026-10-20', entries: [{ id: 'c' }] },
+    ],
+  }
+  it('puts favourites first, then the newest trained, then the rest in order', () => {
+    expect(sortRecentFirst(list, S).map(e => e.id)).toEqual(['d', 'b', 'c', 'a'])
+  })
+  it('reads the newest day per exercise', () => {
+    expect(lastUsedOf(S)).toEqual({ b: '2026-11-05', c: '2026-11-05' })
+  })
+  it('leaves the list as it is with no history', () => {
+    expect(sortRecentFirst(list, {}).map(e => e.id)).toEqual(['a', 'b', 'c', 'd'])
   })
 })

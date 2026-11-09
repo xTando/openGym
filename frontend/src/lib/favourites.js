@@ -48,3 +48,27 @@ export function usageOf(S) {
   for (const w of S?.workouts || []) for (const e of w.entries || []) u[e.id] = (u[e.id] || 0) + 1
   return u
 }
+
+/** The newest day each exercise was logged on: id -> 'YYYY-MM-DD'. */
+export function lastUsedOf(S) {
+  const u = {}
+  for (const w of S?.workouts || []) {
+    if (!w?.d) continue
+    for (const e of w.entries || []) if (e?.id && (!u[e.id] || w.d > u[e.id])) u[e.id] = w.d
+  }
+  return u
+}
+
+/**
+ * The Library with nothing typed (fork redesign): favourites, then what you trained most
+ * recently, newest first, then the rest in the order it came in. Opening the tab shows your own
+ * exercises instead of the alphabet's first 40 of 5,000.
+ */
+export function sortRecentFirst(list, S) {
+  const fav = new Set(favIds(S))
+  const last = lastUsedOf(S)
+  const favs = list.filter(e => fav.has(e.id))
+  const used = list.filter(e => !fav.has(e.id) && last[e.id]).sort((a, b) => (last[a.id] < last[b.id] ? 1 : last[a.id] > last[b.id] ? -1 : 0))
+  const rest = list.filter(e => !fav.has(e.id) && !last[e.id])
+  return [...favs, ...used, ...rest]
+}

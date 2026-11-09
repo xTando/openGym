@@ -283,12 +283,13 @@ function Schedule({ S, update, nav, mode }) {
   // One weekday: what is on it at a glance, and a tap to change it (dayAssignSheet picks one
   // routine, several for a combined day, or a rest day).
   const dayRow = (d, rs = dayRoutines(d)) => {
-    return <div key={d} className="item plan-day" data-day={d} aria-label={t(DAYN[d])} {...tappable(() => dayAssignSheet(d))}>
+    // Fork redesign: a rest day is a thin row (day and "Rest day"), so the training days stand out.
+    return <div key={d} className={'item plan-day' + (rs.length ? '' : ' is-rest')} data-day={d} aria-label={t(DAYN[d])} {...tappable(() => dayAssignSheet(d))}>
       <span className={'plan-day-n' + (d === todayDow ? ' today' : '')} aria-hidden="true">{t(DAYS[d])}</span>
       <span className={'lrow-i' + (rs.length ? '' : ' rest')}><Icon name={rs.length ? glyphOf(rs[0].emoji) : 'moon'} /></span>
       <div className="grow">
         <div className="tt">{rs.length ? deriveSessionName(rs.map(r => r.name)) : t('Rest day')}</div>
-        <div className="ss">{rs.length === 1 ? exCount(rs[0].ex.length) : rs.length ? routineCount(rs.length) : t('Tap to plan something')}</div>
+        {rs.length > 0 && <div className="ss">{rs.length === 1 ? exCount(rs[0].ex.length) : routineCount(rs.length)}</div>}
       </div>
       {rs.length > 0 && <MiniBodyMap routines={rs} body={S.body} tour="plan-body" />}
       <Icon name="chevronRight" className="chev" />
@@ -403,7 +404,8 @@ function Schedule({ S, update, nav, mode }) {
 
     {/* Weekly muscle volume is analysis: it moved to Stats, next to Muscle balance. Stats only
         shows that card once there is a routine, so the link waits for one too. */}
-    {S.routines.length > 0 && <Section className="plan-link">
+    {/* Fork: the link row is gone, the card itself is under Progress, Lifts. */}
+    {false && S.routines.length > 0 && <Section className="plan-link">
       <Row icon="chart" iconTint="var(--indigo)" title={t('Weekly muscle volume')} subtitle={t('Now in Stats, next to Muscle balance')}
         accessory="chevron" onClick={() => nav('/stats?focus=weekly-volume')} />
     </Section>}

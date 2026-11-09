@@ -495,12 +495,23 @@ export function ExerciseTimeCard({ S }) {
 // is rewritten with replaceState, not a router navigation, so the app's own scroll restore for a
 // route change never fights the scroll the tap just started.
 const sectionOfHash = () => (/[?&]section=([a-z]+)/.exec(typeof window === 'undefined' ? '' : window.location.hash || '') || [])[1] || ''
-export function StatsIndex({ sections }) {
+// Fork redesign: with `onPick` the index is a set of tabs. Only the picked part is drawn, so
+// Progress is a screen or two instead of ten, and a tap swaps the part instead of scrolling to it.
+export function StatsIndex({ sections, onPick, value }) {
   const asked = sectionOfHash()
   const [cur, setCur] = useState(sections.some(x => x.value === asked) ? asked : 'overview')
   const quietUntil = useRef(0)   // the scroll a tap started is not the reader's: hold the spy
   const go = (v, smooth = true) => {
     setCur(v)
+    if (onPick) {
+      onPick(v)
+      window.scrollTo?.({ top: 0, behavior: 'auto' })
+      try {
+        const base = (window.location.hash || '#/stats').split('?')[0]
+        window.history.replaceState(window.history.state, '', base + (v === 'overview' ? '' : '?section=' + v))
+      } catch { /* a sandboxed frame */ }
+      return
+    }
     quietUntil.current = Date.now() + 900
     const behavior = smooth ? 'smooth' : 'auto'
     if (v === 'overview') window.scrollTo?.({ top: 0, behavior })
@@ -523,6 +534,7 @@ export function StatsIndex({ sections }) {
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(settle); window.removeEventListener('touchstart', mark); window.removeEventListener('wheel', mark) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (onPick) return undefined
     let raf = 0
     const spy = () => {
       raf = 0
@@ -547,7 +559,7 @@ export function StatsIndex({ sections }) {
     return () => { window.removeEventListener('scroll', onScroll); if (raf) window.cancelAnimationFrame(raf) }
   }, [sections.length]) // eslint-disable-line react-hooks/exhaustive-deps
   return <nav className="stats-index" aria-label={t('Stats')}>
-    <Segmented className="stats-index-seg" value={cur} onChange={v => go(v)} options={sections} />
+    <Segmented className="stats-index-seg" value={value ?? cur} onChange={v => go(v)} options={sections} />
   </nav>
 }
 
@@ -555,6 +567,8 @@ export default function Stats() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
   const [range, setRange] = useState(90)
+  // Plan's weekly-volume link lands on Lifts, where that card is.
+  const [part, setPart] = useState(() => (/[?&]focus=weekly-volume\b/.test(typeof window === 'undefined' ? '' : window.location.hash || '') ? 'lifts' : sectionOfHash() || 'overview'))
   // Plan's "Weekly muscle volume" row lands here (/stats?focus=weekly-volume): the Muscles card
   // opens on Planned and scrolls into view. The router is a HashRouter, so the query sits in the
   // hash; the scroll waits a frame for the page's own scroll-to-top on navigation to happen first.
@@ -849,6 +863,8 @@ export default function Stats() {
     { value: 'lifts', label: t('Lifts') },
     ...(hasEffortSect ? [{ value: 'effort', label: t('Effort') }] : []),
   ]
+  const shownPart = sections.some(x => x.value === part) ? part : 'overview'
+  const show = v => shownPart === v
   const recent = [...workouts].reverse().slice(0, RECENT_ROWS)
   const wrapped = motivationOn ? wrappedYears(S).slice(0, 4) : []
   const thisYear = new Date().getFullYear()
@@ -871,7 +887,7 @@ export default function Stats() {
   </>
 
   return <>
-    <div className="hdr"><SeasonDeco spot="stats-hdr" /><div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
+    <div className="hdr"><SeasonDeco spot="stats-hdr" /><div><h1>{t('Progress')}</h1></div>
       <div className="row" style={{ gap: 8 }}>
         <button className="iconbtn" onClick={reportSheet} aria-label={t('Performance report')} title={t('Performance report')}><Icon name="note" /></button>
         <button className="iconbtn" data-tour="stats-history" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>
@@ -880,9 +896,9 @@ export default function Stats() {
     {/* The page in four parts (redesign 1.4.5, P5), each with its own heading, and a sticky index
         that jumps to them and follows the scroll. It is still one page: every card is where a
         scroll finds it. /stats?section=lifts (and body, effort) opens on that part. */}
-    <StatsIndex sections={sections} />
+    <StatsIndex sections={sections} onPick={setPart} value={shownPart} />
 
-    <section className="stats-sect" id="stats-overview" data-stats-sect="overview" aria-label={t('Overview')}>
+    {show('overview') && <section className="stats-sect" id="stats-overview" data-stats-sect="overview" aria-label={t('Overview')}>
     {/* The headline numbers as one divided card: three across, the lifetime total under them at
         full width (a few hundred sessions make a long number). The week streak is not a tile any
         more: it is the card right below, once. */}
@@ -918,9 +934,9 @@ export default function Stats() {
       <div className="list">{recent.map(w => <WorkoutRow key={w.id} w={w} onClick={() => workoutDetailSheet(w)} />)}</div>
     </>}
 
-    </section>
+    </section>}
 
-    {bodyOn && <section className="stats-sect" id="stats-body" data-stats-sect="body" aria-labelledby="stats-h-body">
+    {bodyOn && show('body') && <section className="stats-sect" id="stats-body" data-stats-sect="body" aria-labelledby="stats-h-body">
       <h2 className="stats-sect-h" id="stats-h-body">{t('Body')}</h2>
     <div className="card">
       <div className="row between bw-head" style={{ marginBottom: 8 }}>
@@ -944,7 +960,7 @@ export default function Stats() {
       {statsLinks}
     </section>}
 
-    <section className="stats-sect" id="stats-lifts" data-stats-sect="lifts" aria-labelledby="stats-h-lifts">
+    {show('lifts') && <section className="stats-sect" id="stats-lifts" data-stats-sect="lifts" aria-labelledby="stats-h-lifts">
       <h2 className="stats-sect-h" id="stats-h-lifts">{t('Lifts')}</h2>
     <div className="card" data-tour="stats-records">
       <SeasonDeco spot="stats-peek" />
@@ -1017,9 +1033,9 @@ export default function Stats() {
     {workouts.length > 0 && on('strength') && <StrengthLevelsCard S={S} />}
     {!effortOn && timeCard && <ExerciseTimeCard S={S} />}
     {!bodyOn && statsLinks}
-    </section>
+    </section>}
 
-    {hasEffortSect && <section className="stats-sect" id="stats-effort" data-stats-sect="effort" aria-labelledby="stats-h-effort">
+    {hasEffortSect && show('effort') && <section className="stats-sect" id="stats-effort" data-stats-sect="effort" aria-labelledby="stats-h-effort">
       <h2 className="stats-sect-h" id="stats-h-effort">{t('Effort')}</h2>
     {effortCard && <EffortCard S={S} />}
     {timeCard && <ExerciseTimeCard S={S} />}

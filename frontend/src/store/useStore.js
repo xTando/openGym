@@ -18,6 +18,7 @@ import { pendingRefCount, settleMedia, loadPending } from '../lib/media-owed.js'
 import { keptHashes } from '../lib/media-refs.js'
 import { mediaStore, mediaStoreInUse } from '../lib/media-store.js'
 import { countChanges, syncFingerprint } from '../lib/sync-changes.js'
+import { MODULE_IDS } from '../lib/modules.js'
 import { saveWorkoutEdit, deleteEditedWorkout } from '../lib/session-edit.js'
 import { appBase } from '../lib/app-base.js'
 import { linkTokenFromSearch, stripLinkFromUrl } from '../lib/device-link.js'
@@ -113,7 +114,7 @@ export const DEF = {
   // running ({ id, startedOn, pausedOn?, cycle, bump, saved }) or null. Starting one writes its
   // schedule into `week` or `rotation` above, so everything that reads those follows it.
   programmes: {}, programme: null,
-  exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'full',
+  exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'mini',
   // Stats activity heatmap metric. Profiles without this key continue to open on time.
   heatmapMetric: 'time',
   // Settings → Units → "Count warm-ups in volume" (#719): off keeps volume to work sets.
@@ -332,6 +333,11 @@ export function freshState() {
   s.lang = detectedLang()
   s.langAuto = true
   s.weighIn = false
+  // Fork default: a lean start. Only plates and warm-ups, strength levels and body weight are on;
+  // effort (RIR), the watch, health apps, check-in, motivation, the Coach, integrations and the
+  // seasonal themes stay off until switched on in Settings, Modules.
+  const lean = new Set(['plates', 'strength', 'body'])
+  s.modules = Object.fromEntries(MODULE_IDS.map(id => [id, lean.has(id)]))
   // Exercise animations: Small (v1.3.11), a thumbnail beside the exercise name that a tap opens,
   // so the first set is on screen without scrolling. DEF stays 'full' for a profile saved before.
   s.gifSize = 'mini'
