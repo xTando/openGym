@@ -6,6 +6,11 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Stats from './Stats.jsx'
 
+// Fork: Stats draws one part at a time (tabs); these tests read cards from every part.
+import { beforeEach as forkBeforeEach, afterEach as forkAfterEach } from 'vitest'
+forkBeforeEach(() => { if (!window.location.hash.includes('?')) window.location.hash = '#/stats?section=all' })
+forkAfterEach(() => { window.location.hash = '' })
+
 const mocks = vi.hoisted(() => ({ charts: [], S: null }))
 vi.mock('../store/useStore.js', () => ({ useStore: selector => selector({ S: mocks.S }) }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => () => {} }))

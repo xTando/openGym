@@ -327,7 +327,8 @@ describe('Plan — someone else’s queue, and a broken one', () => {
 })
 
 describe('Plan — Schedule extras', () => {
-  it('links to the weekly muscle volume in Stats', () => {
+  // Fork: the link row was removed from Plan; the card lives under Progress, Lifts.
+  it.skip('links to the weekly muscle volume in Stats', () => {
     mount()
     click(byLabel('Weekly muscle volume') || [...host.querySelectorAll('.plan-link button')][0])
     expect(mocks.nav).toHaveBeenCalledWith('/stats?focus=weekly-volume')

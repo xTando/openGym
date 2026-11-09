@@ -74,7 +74,8 @@ describe('Plan — the weekday rows', () => {
     mount()
     const tuesday = day('Tuesday')
     expect(tuesday.textContent).toContain('Rest day')
-    expect(tuesday.textContent).toContain('Tap to plan something')
+    // fork: a rest day is a thin row without the "Tap to plan something" line
+    expect(tuesday.classList.contains('is-rest')).toBe(true)
     act(() => tuesday.click())
     expect(dayAssignSheet).toHaveBeenCalledWith(2)
   })

@@ -8,6 +8,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import Workout from './Workout.jsx'
 import { DEF, useStore } from '../store/useStore.js'
 
+// Fork: steppers are off by default; these tests are about the +/- buttons, so they keep them on.
+vi.mock('../lib/workout-controls.js', async orig => {
+  const m = await orig()
+  const D = Object.freeze({ ...m.WC_DEFAULT, steppers: true })
+  return { ...m, WC_DEFAULT: D, workoutControls: S => ({ ...D, ...((S && S.wc) || {}) }) }
+})
+
 vi.mock('../lib/sound.js', () => ({ beep: vi.fn(), vibrate: vi.fn(), alertBuzz: vi.fn(), unlock: vi.fn() }))
 vi.mock('../lib/api.js', () => ({ api: vi.fn(() => Promise.resolve({})) }))
 

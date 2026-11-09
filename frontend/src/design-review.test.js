@@ -124,10 +124,10 @@ describe('1.4.5 features pass', () => {
       if (!/settrend|recap-v/.test(sel)) expect(decls, sel).not.toMatch(/font-size:\d+px/)
     }
   })
-  it('a ticked set fades its parts, not the number that carries the arrow', () => {
-    expect(rule('.setrow.done')).toBe('')
-    expect(rule('.setrow.done>*:not(.n)')).toMatch(/opacity:\.45/)
-    expect(rule('.setrow.done .n')).toMatch(/background:var\(--acc\);color:var\(--on-acc\);\s*background:color-mix/)
+  // Fork: a ticked set tints its whole row in the accent (with a plain colour before the
+  // color-mix) instead of fading its parts, as in the redesign mockup.
+  it('a ticked set tints its row, with a plain fallback before the color-mix', () => {
+    expect(rule('.setrow.done')).toMatch(/background:rgba\([^)]*\);background:color-mix/)
   })
 })
 

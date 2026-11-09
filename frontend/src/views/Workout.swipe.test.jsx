@@ -8,6 +8,13 @@ import { DEF, useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { closeOpenRow } from '../lib/use-swipe-row.js'
 
+// Fork: steppers are off by default; these tests are about the +/- buttons, so they keep them on.
+vi.mock('../lib/workout-controls.js', async orig => {
+  const m = await orig()
+  const D = Object.freeze({ ...m.WC_DEFAULT, steppers: true })
+  return { ...m, WC_DEFAULT: D, workoutControls: S => ({ ...D, ...((S && S.wc) || {}) }) }
+})
+
 // Swipe on sets (v1.3.11): swipe toward the start removes a set with an Undo, toward the end
 // copies it. These cover the store paths the swipe, the set menu and the Undo share, the guards
 // (last set, timers), and the gesture on a real rendered row.

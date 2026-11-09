@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-// Stats in four parts with a sticky index (redesign 1.4.5, P5): one page, each part with its
-// heading, an index that jumps there and writes the part into the address.
+// Stats in four parts (redesign 1.4.5, P5), shown as tabs in the fork: one part at a time, the
+// picked part written into the address, ?section=all for the whole page.
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -31,44 +31,38 @@ function mount() {
 }
 const index = () => [...host.querySelectorAll('.stats-index .seg button')]
 
-describe('Stats sections (P5)', () => {
-  it('groups the cards into parts with headings, the tour anchors inside them', () => {
+describe('Stats sections as tabs (fork)', () => {
+  it('names the parts, and the overview is the only one drawn at first', () => {
+    window.history.replaceState(null, '', '#/stats')
     mount()
     const parts = index().map(b => b.textContent)
     expect(parts.slice(0, 3)).toEqual(['Overview', 'Body', 'Lifts'])
-    // every part but the first has its heading, and Effort is offered only when its part is there
-    expect([...host.querySelectorAll('.stats-sect-h')].map(h => h.textContent)).toEqual(parts.slice(1))
-    expect(!!host.querySelector('#stats-effort')).toBe(parts.includes('Effort'))
     expect(host.querySelector('#stats-overview [data-tour="stats-tiles"]')).toBeTruthy()
-    expect(host.querySelector('#stats-lifts [data-tour="stats-records"]')).toBeTruthy()
-    expect(host.querySelector('#stats-body [data-tour="stats-measure"]')).toBeTruthy()
+    expect(host.querySelector('#stats-lifts')).toBeNull()
+    expect(host.querySelector('#stats-body')).toBeNull()
   })
-  it('a tap marks the part, scrolls to it and puts it in the address', () => {
+  it('a tap swaps the part, marks it and puts it in the address', () => {
     window.history.replaceState(null, '', '#/stats')
     mount()
-    const into = vi.fn()
-    host.querySelector('#stats-lifts').scrollIntoView = into
     act(() => index()[2].click())
     expect(index()[2].getAttribute('aria-pressed')).toBe('true')
-    expect(into).toHaveBeenCalled()
+    expect(host.querySelector('#stats-lifts [data-tour="stats-records"]')).toBeTruthy()
+    expect(host.querySelector('#stats-overview')).toBeNull()
     expect(window.location.hash).toBe('#/stats?section=lifts')
     act(() => index()[0].click())
     expect(window.location.hash).toBe('#/stats')
+    expect(host.querySelector('#stats-overview')).toBeTruthy()
   })
   it('opens on the part the address names', () => {
     window.history.replaceState(null, '', '#/stats?section=body')
     mount()
     expect(index()[1].getAttribute('aria-pressed')).toBe('true')
+    expect(host.querySelector('#stats-body [data-tour="stats-measure"]')).toBeTruthy()
   })
-  it('leaves the highlight alone while a sheet pins the page (it jumped to the last part)', async () => {
-    window.history.replaceState(null, '', '#/stats')
+  it('section=all draws every part on one page, each with its heading', () => {
+    window.history.replaceState(null, '', '#/stats?section=all')
     mount()
-    document.body.style.position = 'fixed'
-    await act(async () => { window.dispatchEvent(new Event('scroll')); await new Promise(r => setTimeout(r, 60)) })
-    expect(index()[0].getAttribute('aria-pressed')).toBe('true')
-    document.body.style.position = ''
-    await act(async () => { window.dispatchEvent(new Event('scroll')); await new Promise(r => setTimeout(r, 60)) })
-    // unpinned, the spy reads the page again (here every part sits at the top, so the last wins)
-    expect(index().at(-1).getAttribute('aria-pressed')).toBe('true')
+    const parts = index().map(b => b.textContent)
+    expect([...host.querySelectorAll('.stats-sect-h')].map(h => h.textContent)).toEqual(parts.slice(1))
   })
 })

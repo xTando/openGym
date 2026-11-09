@@ -34,7 +34,8 @@ const mountWith = bodyweight => {
   act(() => root.render(<Home />))
 }
 
-describe('Home body-weight card points', () => {
+// Fork: Home's weight card is a one-line summary without a chart; Stats.weight-window covers the dating.
+describe.skip('Home body-weight card points', () => {
   it('places imported weigh-ins on their own days, not on the import moment', () => {
     const stamp = Date.now()   // what the store's stampChange leaves on a fresh import
     const imported = [

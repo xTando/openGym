@@ -24,6 +24,11 @@ import Stats from './views/Stats.jsx'
 import Library from './views/Library.jsx'
 import StructuralBalance from './views/StructuralBalance.jsx'
 
+// Fork: Stats draws one part at a time (tabs); these tests read cards from every part.
+import { beforeEach as forkBeforeEach, afterEach as forkAfterEach } from 'vitest'
+forkBeforeEach(() => { if (!window.location.hash.includes('?')) window.location.hash = '#/stats?section=all' })
+forkAfterEach(() => { window.location.hash = '' })
+
 vi.mock('./lib/sound.js', () => ({ beep: vi.fn(), vibrate: vi.fn(), alertBuzz: vi.fn(), unlock: vi.fn(), restOver: vi.fn() }))
 vi.mock('./lib/api.js', async importOriginal => ({ ...(await importOriginal()), api: vi.fn(() => Promise.resolve({})), beacon: vi.fn() }))
 

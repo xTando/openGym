@@ -863,8 +863,9 @@ export default function Stats() {
     { value: 'lifts', label: t('Lifts') },
     ...(hasEffortSect ? [{ value: 'effort', label: t('Effort') }] : []),
   ]
-  const shownPart = sections.some(x => x.value === part) ? part : 'overview'
-  const show = v => shownPart === v
+  // `?section=all` draws every part on one page, the way Stats was before the tabs.
+  const shownPart = part === 'all' || sections.some(x => x.value === part) ? part : 'overview'
+  const show = v => shownPart === 'all' || shownPart === v
   const recent = [...workouts].reverse().slice(0, RECENT_ROWS)
   const wrapped = motivationOn ? wrappedYears(S).slice(0, 4) : []
   const thisYear = new Date().getFullYear()
@@ -896,7 +897,7 @@ export default function Stats() {
     {/* The page in four parts (redesign 1.4.5, P5), each with its own heading, and a sticky index
         that jumps to them and follows the scroll. It is still one page: every card is where a
         scroll finds it. /stats?section=lifts (and body, effort) opens on that part. */}
-    <StatsIndex sections={sections} onPick={setPart} value={shownPart} />
+    <StatsIndex sections={sections} onPick={setPart} value={shownPart === 'all' ? 'overview' : shownPart} />
 
     {show('overview') && <section className="stats-sect" id="stats-overview" data-stats-sect="overview" aria-label={t('Overview')}>
     {/* The headline numbers as one divided card: three across, the lifetime total under them at

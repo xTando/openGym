@@ -10,6 +10,13 @@ import { DEF, useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { withExUnit, shownWeight } from '../lib/ex-unit.js'
 
+// Fork: steppers are off by default; these tests are about the +/- buttons, so they keep them on.
+vi.mock('../lib/workout-controls.js', async orig => {
+  const m = await orig()
+  const D = Object.freeze({ ...m.WC_DEFAULT, steppers: true })
+  return { ...m, WC_DEFAULT: D, workoutControls: S => ({ ...D, ...((S && S.wc) || {}) }) }
+})
+
 vi.mock('../lib/sound.js', () => ({ beep: vi.fn(), vibrate: vi.fn(), alertBuzz: vi.fn(), unlock: vi.fn(), restOver: vi.fn() }))
 vi.mock('../lib/api.js', () => ({ api: vi.fn(() => Promise.resolve({})) }))
 
@@ -52,7 +59,7 @@ const LB = { exUnit: withExUnit({}, BENCH, 'lb', 1) }
 describe('a pinned exercise in a running session', () => {
   it('labels and shows its own unit, next to an exercise in the profile’s', () => {
     mount([entry(BENCH, [work(61.235)]), entry(SQUAT, [work(100)])], LB)
-    expect(heads()).toEqual(['Weight (lb)', 'Weight (kg)'])
+    expect(heads()).toEqual(['lb', 'kg']) // fork: the header is the unit alone
     expect(weights()).toEqual([['135'], ['100']])
   })
 

@@ -96,7 +96,7 @@ describe('Home: the streak card and check-in', () => {
     const host = mount()
     const card = host.querySelector('.streak-card')
     expect(card.getAttribute('role')).toBeNull()
-    act(() => card.querySelector('.wsets-home').click())
+    act(() => host.querySelector('.wsets-home').click())  // fork: the line has its own card below the streak
     expect(navSpy).toHaveBeenCalledWith('/stats?section=lifts')
     expect(calendarSheet).not.toHaveBeenCalled()
     act(() => card.querySelector('.tap-main').click())

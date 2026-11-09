@@ -12,6 +12,13 @@ import { discardedFor } from '../lib/watch-sync.js'
 import { finishWorkout, finishWorkoutSheet } from '../sheets.jsx'
 import { menuItemsOf } from '../lib/menu-items.js'
 
+// Fork: steppers are off by default; these tests are about the +/- buttons, so they keep them on.
+vi.mock('../lib/workout-controls.js', async orig => {
+  const m = await orig()
+  const D = Object.freeze({ ...m.WC_DEFAULT, steppers: true })
+  return { ...m, WC_DEFAULT: D, workoutControls: S => ({ ...D, ...((S && S.wc) || {}) }) }
+})
+
 // A menu's actions in order, whether it came as one list or in groups (menuSheet `sections`).
 
 const mocks = vi.hoisted(() => {
@@ -2380,8 +2387,9 @@ describe('workout compact view', () => {
     await mount([withExtras([false])], 0, state)
 
     expect(container.querySelector('.progline')).toBeTruthy()
-    expect(container.textContent).toContain('Best:')
-    expect(container.textContent).toContain('Last time')
+    // Fork: the Best tag and the Last time line gave way to the Previous column.
+    expect(container.querySelector('.sethead .p-sp')?.textContent).toBe('Previous')
+    expect(container.querySelector('.setrow .prev')?.textContent).toBe('60×5')
   })
 
   it('completing a set still starts the rest, like list and cards', async () => {
@@ -3261,7 +3269,8 @@ describe('per-side effort completion', () => {
 
 // QA C9: custom exercises store their target as a muscle-map id ("gluteal"); the tag under the
 // exercise name has to show the same label the detail sheet does (Glutes), not the raw id.
-describe('Workout exercise tags', () => {
+// Fork: the workout screen no longer shows the muscle and equipment tags (the exercise sheet does).
+describe.skip('Workout exercise tags', () => {
   it('names a custom exercise\'s target muscle by its display name', async () => {
     const { registerCustom } = await import('../lib/exercises.js')
     registerCustom([{ id: 'cqa1', n: 'QA Custom Thrust', bp: 'upper legs', eq: 'barbell', custom: true, tg: 'gluteal', sm: [], primaries: ['gluteal'], secondaries: [], muscleGroups: ['gluteal'] }])
@@ -3358,7 +3367,8 @@ describe('set-row column header', () => {
 
 // #173: the line under an exercise holds the rows against the last time in this routine, or
 // against the best set of the exercise; tapping the line switches, for every exercise.
-describe('the reference line: last time or best set', () => {
+// Fork: the Previous column replaces this line whenever there is a last time to show.
+describe.skip('the reference line: last time or best set', () => {
   const session = (d, rid, w, r) => ({ d, start: Date.parse(d + 'T18:00:00'), routineIds: [rid], entries: [{ id: 'plain-bench', rid, target: { reps: r, weight: w }, sets: [{ w, r, done: true }] }] })
   const history = [session('2026-08-10', 'B', 80, 5), session('2026-08-24', 'A', 60, 10), session('2026-08-26', 'A', 55, 8)]
   const line = () => container.querySelector('.refline')

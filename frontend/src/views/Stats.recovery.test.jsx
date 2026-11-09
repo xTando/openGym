@@ -12,6 +12,11 @@ import Modals from '../components/Modals.jsx'
 import { bindUI } from '../components/ui.jsx'
 import { useUI } from '../store/useUI.js'
 
+// Fork: Stats draws one part at a time (tabs); these tests read cards from every part.
+import { beforeEach as forkBeforeEach, afterEach as forkAfterEach } from 'vitest'
+forkBeforeEach(() => { if (!window.location.hash.includes('?')) window.location.hash = '#/stats?section=all' })
+forkAfterEach(() => { window.location.hash = '' })
+
 const DAY = 86400000
 const HOUR = 3600000
 const BASE_NOW = Date.UTC(2026, 0, 22, 12)
@@ -161,6 +166,7 @@ function installDom() {
   dom = new Window({ url: 'http://localhost/' })
   dom.scrollTo = vi.fn()
   globalThis.window = dom
+  dom.location.hash = '#/stats?section=all'  // fork: Stats tabs; these tests read cards from every part
   globalThis.document = dom.document
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: dom.navigator })
   Object.defineProperty(globalThis, 'location', { configurable: true, value: dom.location })

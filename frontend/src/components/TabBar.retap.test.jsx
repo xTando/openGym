@@ -42,8 +42,8 @@ afterEach(() => {
 })
 
 describe('tapping the tab you are on', () => {
-  it.each(['Home', 'Plan', 'Stats', 'Exercises'])('%s scrolls its page to the top, smoothly', async label => {
-    const path = { Home: '/home', Plan: '/plan', Stats: '/stats', Exercises: '/library' }[label]
+  it.each(['Today', 'Progress', 'Exercises'])('%s scrolls its page to the top, smoothly', async label => {
+    const path = { Today: '/home', Progress: '/stats', Exercises: '/library' }[label]
     await act(async () => router.navigate(path))
     const key = router.state.location.key
     at(3000)
@@ -66,8 +66,8 @@ describe('tapping the tab you are on', () => {
   })
 
   it('at the top of another tab does nothing', async () => {
-    await act(async () => router.navigate('/plan'))
-    await tap('Plan')
+    await act(async () => router.navigate('/stats'))
+    await tap('Progress')
     expect(window.scrollTo).not.toHaveBeenCalled()
     expect(document.activeElement).not.toBe(page.querySelector('.search input'))
   })
@@ -82,7 +82,7 @@ describe('tapping the tab you are on', () => {
 
 it('a tap on another tab switches as before and does not scroll', async () => {
   at(3000)
-  await tap('Stats')
+  await tap('Progress')
   expect(router.state.location.pathname).toBe('/stats')
   expect(window.scrollTo).not.toHaveBeenCalled()
 })
@@ -90,7 +90,7 @@ it('a tap on another tab switches as before and does not scroll', async () => {
 it('History lights Stats, and a tap there goes to Stats rather than up History', async () => {
   await act(async () => router.navigate('/history'))
   at(3000)
-  await tap('Stats')
+  await tap('Progress')
   expect(router.state.location.pathname).toBe('/stats')
   expect(window.scrollTo).not.toHaveBeenCalled()
 })

@@ -9,6 +9,11 @@ import Stats from './Stats.jsx'
 import { buildDemoState } from '../lib/demoSeed.js'
 import { TEMPLATE_LIST } from '../lib/structuralBalanceTemplates.js'
 
+// Fork: Stats draws one part at a time (tabs); these tests read cards from every part.
+import { beforeEach as forkBeforeEach, afterEach as forkAfterEach } from 'vitest'
+forkBeforeEach(() => { if (!window.location.hash.includes('?')) window.location.hash = '#/stats?section=all' })
+forkAfterEach(() => { window.location.hash = '' })
+
 const navSpy = vi.fn()
 vi.mock('react-router-dom', () => ({ useNavigate: () => navSpy }))
 

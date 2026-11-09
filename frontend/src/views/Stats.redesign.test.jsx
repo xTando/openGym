@@ -14,6 +14,11 @@ import { DEF } from '../store/useStore.js'
 import Stats from './Stats.jsx'
 import { pickFrom, pickerOptions } from './stats-pick.test-util.js'
 
+// Fork: Stats draws one part at a time (tabs); these tests read cards from every part.
+import { beforeEach as forkBeforeEach, afterEach as forkAfterEach } from 'vitest'
+forkBeforeEach(() => { if (!window.location.hash.includes('?')) window.location.hash = '#/stats?section=all' })
+forkAfterEach(() => { window.location.hash = '' })
+
 const mocks = vi.hoisted(() => ({ S: null, nav: vi.fn(), charts: [], maps: [], history: vi.fn() }))
 vi.mock('../store/useStore.js', async importOriginal => {
   const actual = await importOriginal()

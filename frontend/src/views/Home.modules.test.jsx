@@ -32,7 +32,8 @@ const mountWith = (modules, extra = {}) => {
   }))
   act(() => root.render(<Home />))
 }
-const heads = () => [...host.querySelectorAll('.card-head-title')].map(el => el.textContent)
+// Fork: the weight card's label (.bw-lbl) counts as its heading.
+const heads = () => [...host.querySelectorAll('.card-head-title, .bw-lbl')].map(el => el.textContent)
 
 describe('Home follows the modules', () => {
   it('Everything: the weight card, the check-in and the streak are there', () => {
@@ -48,7 +49,7 @@ describe('Home follows the modules', () => {
     expect(heads()).not.toContain('Check in')
     expect(heads().some(h => /week streak/.test(h))).toBe(false)
     expect(host.querySelector('[data-tour="today"]')).toBeTruthy()
-    expect(host.querySelector('.week')).toBeTruthy()
+    expect(host.querySelector('.today-card')).toBeTruthy()  // fork: the Today card stays (the week card needs a plan)
   })
 
   it('one module at a time, and back on brings it back', () => {

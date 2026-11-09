@@ -40,7 +40,8 @@ const setS = (over = {}) => useStore.setState(s => ({
   user: null,
 }))
 const mount = () => act(() => root.render(<Home />))
-const door = () => [...host.querySelectorAll('button')].find(b => b.textContent.includes('Choose a different workout'))
+// Fork: the door is the routine pill under the title, named by its label.
+const door = () => [...host.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || b.textContent).includes('Choose a different workout'))
 
 describe('Home — the way to the Start screen when a plan already owns today', () => {
   it('offers the door on a planned day, where the Start button would start the plan', () => {
@@ -69,18 +70,18 @@ describe('Home — the way to the Start screen when a plan already owns today', 
   it('reads an open editor on a saved workout as an edit, not as a session in progress', () => {
     setS({ active: { id: 'w', name: 'Push', start: 1000, cur: 0, entries: [], editingWorkoutId: 'w' } })
     mount()
-    const row = host.querySelector('.today-row')
+    const row = host.querySelector('.today-card')
     expect(row.querySelector('.ttl').textContent).toBe('Push')
-    expect(row.querySelector('.tag').textContent).toBe('Edit')
-    act(() => { row.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(row.querySelector('.today-start').textContent).toBe('Edit')
+    act(() => { row.querySelector('.today-start').dispatchEvent(new MouseEvent('click', { bubbles: true })) })
     expect(nav).toHaveBeenCalledWith('/workout')
   })
 
   it('still reads a running session as in progress', () => {
     setS({ active: { id: 'a', name: 'Push', start: Date.now(), cur: 0, entries: [] } })
     mount()
-    const row = host.querySelector('.today-row')
+    const row = host.querySelector('.today-card')
     expect(row.querySelector('.ttl').textContent).toBe('Push (in progress)')
-    expect(row.querySelector('.tag').textContent).toBe('Resume')
+    expect(row.querySelector('.today-start').textContent).toBe('Resume')
   })
 })

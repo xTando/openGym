@@ -29,10 +29,11 @@ describe('exercise animations default', () => {
     expect(freshState().gifSize).toBe('mini')
   })
 
-  it('DEF keeps Full, so an existing profile without the key is not changed under it', () => {
-    expect(DEF.gifSize).toBe('full')
+  // Fork: every profile without its own choice gets Small, imported ones included.
+  it('DEF is Small too, so a restored profile without the key gets the thumbnail', () => {
+    expect(DEF.gifSize).toBe('mini')
     const S = restoredStateFor({ workouts: [], routines: [], bodyweight: [], customEx: [] }, { workouts: [{ id: 'w1' }], routines: [] })
-    expect(S.gifSize).toBe('full')
+    expect(S.gifSize).toBe('mini')
   })
 })
 

@@ -185,7 +185,7 @@ export default function Home() {
           : routine ? todayName : t('Rest day')}{todayOvr && routine && !doneToday ? ' · ' + t('rescheduled') : ''}</div>
         {lastSame && !S.active && !doneToday && <span className="small dim">{t('Last time')}: {fmtDate(lastSame.d, true)}</span>}
       </div>
-      {next && !doneToday && <div className="small dim" style={{ marginTop: 4 }}>{t('Next session: {0}, {1}', t(DAYN[next.weekday]), next.routine.name)}</div>}
+      {next && !doneToday && <div className="small dim ss" style={{ marginTop: 4 }}>{t('Next session: {0}, {1}', t(DAYN[next.weekday]), next.routine.name)}</div>}
       {preview.length > 0 && <div className="today-list">
         {preview.slice(0, 6).map(({ e, id, key }) => {
           const ex = EXIDX[id]
@@ -205,7 +205,7 @@ export default function Home() {
 
     {!rotating && left && <div className="card today-week" {...tappable(() => nav('/plan'))}>
       <div><div className="small dim">{t('This week')}</div>
-        <div className="ttl2">{left.left > 0 ? tn('{0} of {1} left this week', '{0} of {1} left this week', left.left, left.of) : t('All done this week. Nice.')}</div></div>
+        <div className="ttl2 wkleft">{left.left > 0 ? tn('{0} of {1} left this week', '{0} of {1} left this week', left.left, left.of) : t('All done this week. Nice.')}</div></div>
       <div className="week-dots" aria-hidden="true">{Array.from({ length: left.of }, (_, i) => <span key={i} className={i < left.of - left.left ? 'on' : ''} />)}</div>
     </div>}
 
@@ -219,8 +219,8 @@ export default function Home() {
 
     {on('body') && S.showWeightCard !== false && <div className="card today-bw">
       <div className="row between">
-        <div {...tappable(weighInsSheet)} style={{ minWidth: 0 }}>
-          <div className="small dim">{t('Body weight')}</div>
+        <div {...tappable(() => weighInsSheet())} style={{ minWidth: 0 }}>
+          <div className="small dim bw-lbl">{t('Body weight')}</div>
           {bw ? <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
             <span className="ttl2">{fmtNum(bw.w)} <span className="dim small">{S.unit}</span></span>
             {!!delta && <span className="small" style={{ fontWeight: 600, color: bwDeltaColor(delta, bw.w) }}>{delta > 0 ? '+' : '−'}{fmtNum(Math.abs(delta))}</span>}

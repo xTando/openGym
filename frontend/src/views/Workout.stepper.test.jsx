@@ -4,6 +4,13 @@ import { parseHTML } from 'linkedom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Workout from './Workout.jsx'
 
+// Fork: steppers are off by default; these tests are about the +/- buttons, so they keep them on.
+vi.mock('../lib/workout-controls.js', async orig => {
+  const m = await orig()
+  const D = Object.freeze({ ...m.WC_DEFAULT, steppers: true })
+  return { ...m, WC_DEFAULT: D, workoutControls: S => ({ ...D, ...((S && S.wc) || {}) }) }
+})
+
 // This suite pins down the superset stepper regression: one tap on a +/- button must move the
 // value by exactly one step. The bug was a stale closure — in a superset both ExerciseBlock
 // instances share the same store subscription, so updating one member's field re-renders the
